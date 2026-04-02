@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>減法大師 - 豆豆數學大挑戰</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .game-area {
+            margin-bottom: 30px;
+        }
+
+        .question-display {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .subtraction-problem {
+            font-family: 'Courier New', monospace;
+            font-size: 3em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 20px 0;
+            line-height: 1.2;
+            white-space: pre;
+        }
+
+        .instruction {
+            font-size: 1.5em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .answer-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 30px 0;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .answer-option {
+            background: linear-gradient(145deg, #ff6b6b, #ee5a52);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 20px;
+            font-size: 2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 15px rgba(238, 90, 82, 0.3);
+        }
+
+        .answer-option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(238, 90, 82, 0.4);
+        }
+
+        .answer-option:active {
+            transform: translateY(-2px);
+        }
+
+        .correct {
+            background: linear-gradient(145deg, #4ecdc4, #44a08d) !important;
+            animation: correctAnswer 0.6s ease;
+        }
+
+        .wrong {
+            background: linear-gradient(145deg, #ff4757, #c44569) !important;
+            animation: wrongAnswer 0.6s ease;
+        }
+
+        @keyframes correctAnswer {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes wrongAnswer {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+            100% { transform: translateX(0); }
+        }
+
+        .progress-bar {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 20px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #36d1dc, #5b86e5);
+            height: 100%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            font-size: 1.2em;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            flex: 1;
+            margin: 0 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .start-btn, .restart-btn {
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.3em;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .start-btn:hover, .restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .final-results {
+            background: #e8f5e8;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 20px;
+            border-left: 5px solid #4caf50;
+        }
+
+        .final-results h2 {
+            color: #2e7d32;
+            margin-bottom: 20px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .timer {
+            font-size: 1.2em;
+            color: #e74c3c;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .subtraction-problem {
+                font-size: 2.5em;
+            }
+            
+            .answer-options {
+                grid-template-columns: 1fr;
+                max-width: 300px;
+            }
+            
+            .answer-option {
+                font-size: 1.8em;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-button">← 返回主頁</a>
+    
+    <div class="container">
+        <h1>➖ 減法大師</h1>
+        
+        <div id="welcome-screen">
+            <div class="instruction">
+                <p style="font-size: 1.3em; line-height: 1.6; color: #555;">
+                    歡迎來到減法大師挑戰！<br>
+                    你將看到直式減法題目，請從四個選項中選出正確答案。<br>
+                    題目包含一位數或二位數減去一位數的減法運算。<br>
+                    總共有 <strong>20</strong> 題，我們會記錄你的反應時間！
+                </p>
+            </div>
+            <button class="start-btn" onclick="startGame()">開始挑戰</button>
+        </div>
+
+        <div id="game-screen" class="hidden">
+            <div class="stats">
+                <div class="stat-item">
+                    <div>題目</div>
+                    <div class="stat-value" id="current-question">1</div>
+                </div>
+                <div class="stat-item">
+                    <div>正確率</div>
+                    <div class="stat-value" id="accuracy">100%</div>
+                </div>
+                <div class="stat-item">
+                    <div>平均反應時間</div>
+                    <div class="stat-value" id="avg-time">0.0秒</div>
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+
+            <div class="game-area">
+                <div class="question-display">
+                    <div class="subtraction-problem" id="subtraction-problem"></div>
+                    <div class="instruction">請選擇正確的答案</div>
+                    <div class="timer" id="timer">反應時間: 0.0秒</div>
+                </div>
+
+                <div class="answer-options" id="answer-options">
+                    <!-- 答案選項將由 JavaScript 生成 -->
+                </div>
+            </div>
+        </div>
+
+        <div id="results-screen" class="hidden">
+            <div class="final-results">
+                <h2>🎉 挑戰完成！</h2>
+                <div class="result-item">
+                    <span>總題數:</span>
+                    <span id="final-total">20</span>
+                </div>
+                <div class="result-item">
+                    <span>正確答案:</span>
+                    <span id="final-correct">0</span>
+                </div>
+                <div class="result-item">
+                    <span>正確率:</span>
+                    <span id="final-accuracy">0%</span>
+                </div>
+                <div class="result-item">
+                    <span>總反應時間:</span>
+                    <span id="final-total-time">0.0秒</span>
+                </div>
+                <div class="result-item">
+                    <span>平均反應時間:</span>
+                    <span id="final-avg-time">0.0秒</span>
+                </div>
+                <div class="result-item">
+                    <span>最快反應時間:</span>
+                    <span id="final-fastest">0.0秒</span>
+                </div>
+                <div class="result-item">
+                    <span>最慢反應時間:</span>
+                    <span id="final-slowest">0.0秒</span>
+                </div>
+            </div>
+            <button class="restart-btn" onclick="restartGame()">重新挑戰</button>
+            <a href="index.html" class="restart-btn" style="text-decoration: none; display: inline-block;">回到主頁</a>
+        </div>
+    </div>
+
+    <script>
+        class SubtractionMaster {
+            constructor() {
+                this.totalQuestions = 20;
+                this.currentQuestion = 0;
+                this.correctAnswers = 0;
+                this.responseTimes = [];
+                this.startTime = 0;
+                this.num1 = 0;
+                this.num2 = 0;
+                this.correctAnswer = 0;
+                this.gameActive = false;
+                this.timerInterval = null;
+            }
+
+            startGame() {
+                this.currentQuestion = 0;
+                this.correctAnswers = 0;
+                this.responseTimes = [];
+                this.gameActive = true;
+
+                document.getElementById('welcome-screen').classList.add('hidden');
+                document.getElementById('results-screen').classList.add('hidden');
+                document.getElementById('game-screen').classList.remove('hidden');
+
+                this.nextQuestion();
+            }
+
+            nextQuestion() {
+                if (this.currentQuestion >= this.totalQuestions) {
+                    this.endGame();
+                    return;
+                }
+
+                this.currentQuestion++;
+                this.updateProgress();
+                this.generateQuestion();
+                this.generateOptions();
+                this.startTimer();
+            }
+
+            generateQuestion() {
+                // 生成第二個數字（1-9，一位數）
+                this.num2 = Math.floor(Math.random() * 9) + 1;
+                
+                // 生成第一個數字，確保結果大於0
+                // 最小值是 num2 + 1，最大值是 99
+                const minNum1 = this.num2 + 1;
+                const maxNum1 = 99;
+                this.num1 = Math.floor(Math.random() * (maxNum1 - minNum1 + 1)) + minNum1;
+                
+                this.correctAnswer = this.num1 - this.num2;
+                
+                // 格式化直式顯示，確保個位數對齊
+                const num1Str = this.num1.toString();
+                const num2Str = this.num2.toString();
+                
+                // 計算對齊所需的空格
+                const maxLength = Math.max(num1Str.length + 1, num2Str.length + 2); // +1 是因為減號
+                
+                let problemText = '';
+                
+                // 第一行：第一個數字，右對齊
+                problemText += num1Str.padStart(maxLength) + '\n';
+                
+                // 第二行：減號和第二個數字，右對齊
+                const secondLine = '- ' + num2Str;
+                problemText += secondLine.padStart(maxLength) + '\n';
+                
+                // 第三行：底線
+                problemText += '─'.repeat(maxLength) + '\n';
+                
+                // 第四行：問號（答案位置）
+                problemText += '?'.padStart(maxLength);
+                
+                document.getElementById('subtraction-problem').textContent = problemText;
+                document.getElementById('current-question').textContent = this.currentQuestion;
+            }
+
+            generateOptions() {
+                const optionsContainer = document.getElementById('answer-options');
+                optionsContainer.innerHTML = '';
+
+                // 創建包含正確答案的選項陣列
+                const options = [this.correctAnswer];
+                
+                // 添加3個錯誤答案
+                while (options.length < 4) {
+                    let wrongAnswer;
+                    
+                    // 生成接近正確答案的錯誤答案
+                    const variation = Math.floor(Math.random() * 20) - 10; // -10 到 +9 的變化
+                    wrongAnswer = this.correctAnswer + variation;
+                    
+                    // 確保錯誤答案不等於正確答案，且為正數，且不重複
+                    if (wrongAnswer !== this.correctAnswer && wrongAnswer > 0 && !options.includes(wrongAnswer)) {
+                        options.push(wrongAnswer);
+                    }
+                }
+
+                // 如果無法生成足夠的錯誤答案，補充一些額外的選項
+                while (options.length < 4) {
+                    let wrongAnswer = Math.floor(Math.random() * Math.max(50, this.correctAnswer * 2)) + 1;
+                    if (!options.includes(wrongAnswer)) {
+                        options.push(wrongAnswer);
+                    }
+                }
+
+                // 打亂選項順序
+                this.shuffleArray(options);
+
+                // 創建選項按鈕
+                options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.className = 'answer-option';
+                    button.textContent = option;
+                    button.onclick = () => this.selectAnswer(option, button);
+                    optionsContainer.appendChild(button);
+                });
+            }
+
+            shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            selectAnswer(selectedAnswer, buttonElement) {
+                if (!this.gameActive) return;
+
+                this.gameActive = false;
+                this.stopTimer();
+
+                const responseTime = (Date.now() - this.startTime) / 1000;
+                this.responseTimes.push(responseTime);
+
+                const isCorrect = selectedAnswer === this.correctAnswer;
+
+                if (isCorrect) {
+                    this.correctAnswers++;
+                    buttonElement.classList.add('correct');
+                } else {
+                    buttonElement.classList.add('wrong');
+                    // 標示正確答案
+                    const buttons = document.querySelectorAll('.answer-option');
+                    buttons.forEach(button => {
+                        if (parseInt(button.textContent) === this.correctAnswer) {
+                            button.classList.add('correct');
+                        }
+                    });
+                }
+
+                this.updateStats();
+
+                // 1.5秒後進入下一題
+                setTimeout(() => {
+                    this.nextQuestion();
+                }, 1500);
+            }
+
+            startTimer() {
+                this.startTime = Date.now();
+                this.gameActive = true;
+                
+                // 更新計時器顯示
+                this.timerInterval = setInterval(() => {
+                    if (this.gameActive) {
+                        const elapsed = (Date.now() - this.startTime) / 1000;
+                        document.getElementById('timer').textContent = `反應時間: ${elapsed.toFixed(1)}秒`;
+                    }
+                }, 100);
+            }
+
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+            }
+
+            updateProgress() {
+                const progress = (this.currentQuestion / this.totalQuestions) * 100;
+                document.getElementById('progress-fill').style.width = progress + '%';
+            }
+
+            updateStats() {
+                const accuracy = ((this.correctAnswers / this.currentQuestion) * 100).toFixed(0);
+                document.getElementById('accuracy').textContent = accuracy + '%';
+
+                if (this.responseTimes.length > 0) {
+                    const avgTime = this.responseTimes.reduce((a, b) => a + b, 0) / this.responseTimes.length;
+                    document.getElementById('avg-time').textContent = avgTime.toFixed(1) + '秒';
+                }
+            }
+
+            endGame() {
+                this.stopTimer();
+                document.getElementById('game-screen').classList.add('hidden');
+                document.getElementById('results-screen').classList.remove('hidden');
+
+                // 計算統計數據
+                const totalTime = this.responseTimes.reduce((a, b) => a + b, 0);
+                const avgTime = totalTime / this.responseTimes.length;
+                const fastestTime = Math.min(...this.responseTimes);
+                const slowestTime = Math.max(...this.responseTimes);
+                const accuracy = ((this.correctAnswers / this.totalQuestions) * 100).toFixed(0);
+
+                // 顯示最終結果
+                document.getElementById('final-total').textContent = this.totalQuestions;
+                document.getElementById('final-correct').textContent = this.correctAnswers;
+                document.getElementById('final-accuracy').textContent = accuracy + '%';
+                document.getElementById('final-total-time').textContent = totalTime.toFixed(1) + '秒';
+                document.getElementById('final-avg-time').textContent = avgTime.toFixed(1) + '秒';
+                document.getElementById('final-fastest').textContent = fastestTime.toFixed(1) + '秒';
+                document.getElementById('final-slowest').textContent = slowestTime.toFixed(1) + '秒';
+            }
+
+            restartGame() {
+                document.getElementById('results-screen').classList.add('hidden');
+                document.getElementById('welcome-screen').classList.remove('hidden');
+            }
+        }
+
+        // 創建遊戲實例
+        const game = new SubtractionMaster();
+
+        // 全域函數
+        function startGame() {
+            game.startGame();
+        }
+
+        function restartGame() {
+            game.restartGame();
+        }
+    </script>
+</body>
+</html>

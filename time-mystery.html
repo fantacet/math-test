@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>時間之謎 - 豆豆數學大挑戰</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            text-align: center;
+            max-width: 700px;
+            width: 100%;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .game-area {
+            margin-bottom: 30px;
+        }
+
+        .question-display {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .clock-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 30px;
+            background: white;
+            border-radius: 50%;
+            border: 8px solid #2c3e50;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .clock-face {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+
+        .hour-hand {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            width: 4px;
+            height: 25%;
+            background: #2c3e50;
+            transform-origin: bottom center;
+            transform: translateX(-50%);
+            border-radius: 2px;
+            z-index: 3;
+        }
+
+        .minute-hand {
+            position: absolute;
+            top: 15%;
+            left: 50%;
+            width: 3px;
+            height: 35%;
+            background: #e74c3c;
+            transform-origin: bottom center;
+            transform: translateX(-50%);
+            border-radius: 1.5px;
+            z-index: 2;
+        }
+
+        .center-dot {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 12px;
+            height: 12px;
+            background: #2c3e50;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 4;
+        }
+
+        .hour-mark {
+            position: absolute;
+            width: 3px;
+            height: 15px;
+            background: #2c3e50;
+            top: 5px;
+            left: 50%;
+            transform-origin: 50% 95px;
+            margin-left: -1.5px;
+        }
+
+        .minute-mark {
+            position: absolute;
+            width: 1px;
+            height: 8px;
+            background: #7f8c8d;
+            top: 12px;
+            left: 50%;
+            transform-origin: 50% 88px;
+            margin-left: -0.5px;
+        }
+
+        .hour-numbers {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .number {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .instruction {
+            font-size: 1.5em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .options-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 30px 0;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .time-option {
+            background: linear-gradient(145deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 20px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .time-option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        .time-option:active {
+            transform: translateY(-2px);
+        }
+
+        .correct {
+            background: linear-gradient(145deg, #4ecdc4, #44a08d) !important;
+            animation: correctAnswer 0.6s ease;
+        }
+
+        .wrong {
+            background: linear-gradient(145deg, #ff4757, #c44569) !important;
+            animation: wrongAnswer 0.6s ease;
+        }
+
+        @keyframes correctAnswer {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes wrongAnswer {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+            100% { transform: translateX(0); }
+        }
+
+        .progress-bar {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 20px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #36d1dc, #5b86e5);
+            height: 100%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            font-size: 1.2em;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            flex: 1;
+            margin: 0 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .start-btn, .restart-btn {
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.3em;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .start-btn:hover, .restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .final-results {
+            background: #e8f5e8;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 20px;
+            border-left: 5px solid #4caf50;
+        }
+
+        .final-results h2 {
+            color: #2e7d32;
+            margin-bottom: 20px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .timer {
+            font-size: 1.2em;
+            color: #e74c3c;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-button">← 返回主頁</a>
+    
+    <div class="container">
+        <h1>⏰ 時間之謎</h1>
+        
+        <div id="welcome-screen">
+            <div class="instruction">
+                <p style="font-size: 1.3em; line-height: 1.6; color: #555;">
+                    歡迎來到時間之謎遊戲！<br>
+                    觀察時鐘指針的位置，從下方四個選項中<br>
+                    選出正確的時間。<br>
+                    總共有 <strong>20</strong> 題，我們會記錄你的反應時間！
+                </p>
+            </div>
+            <button class="start-btn" onclick="startGame()">開始遊戲</button>
+        </div>
+
+        <div id="game-screen" class="hidden">
+            <div class="stats">
+                <div class="stat-item">
+                    <div>題目</div>
+                    <div class="stat-value" id="current-question">1</div>
+                </div>
+                <div class="stat-item">
+                    <div>正確率</div>
+                    <div class="stat-value" id="accuracy">100%</div>
+                </div>
+                <div class="stat-item">
+                    <div>平均反應時間</div>
+                    <div class="stat-value" id="avg-time">0.0秒</div>
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+
+            <div class="game-area">
+                <div class="question-display">
+                    <div class="clock-container">
+                        <div class="clock-face">
+                            <!-- 小時刻度線 -->
+                            <div class="hour-mark" style="transform: rotate(0deg);"></div>
+                            <div class="hour-mark" style="transform: rotate(30deg);"></div>
+                            <div class="hour-mark" style="transform: rotate(60deg);"></div>
+                            <div class="hour-mark" style="transform: rotate(90deg);"></div>
+                            <div class="hour-mark" style="transform: rotate(120deg);"></div>
+                            <div class="hour-mark" style="transform: rotate(150deg);"></div>
+                            <div class="hour-mark" style="transform: rotate(180deg);"></div>
+                            <div class="hour-mark" style="transform: rotate(210deg);"></div>
+                            <div class="hour-mark" style="transform: rotate(240deg);"></div>
+                            <div class="hour-mark" style="transform: rotate(270deg);"></div>
+                            <div class="hour-mark" style="transform: rotate(300deg);"></div>
+                            <div class="hour-mark" style="transform: rotate(330deg);"></div>
+                            
+                            <!-- 分鐘刻度線 -->
+                            <div class="minute-mark" style="transform: rotate(6deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(12deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(18deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(24deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(36deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(42deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(48deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(54deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(66deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(72deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(78deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(84deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(96deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(102deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(108deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(114deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(126deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(132deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(138deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(144deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(156deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(162deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(168deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(174deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(186deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(192deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(198deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(204deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(216deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(222deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(228deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(234deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(246deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(252deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(258deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(264deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(276deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(282deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(288deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(294deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(306deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(312deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(318deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(324deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(336deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(342deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(348deg);"></div>
+                            <div class="minute-mark" style="transform: rotate(354deg);"></div>
+
+                            <div class="hour-numbers">
+                                <div class="number" style="top: 25px; left: 50%; transform: translateX(-50%);">12</div>
+                                <div class="number" style="top: 50%; right: 20px; transform: translateY(-50%);">3</div>
+                                <div class="number" style="bottom: 25px; left: 50%; transform: translateX(-50%);">6</div>
+                                <div class="number" style="top: 50%; left: 20px; transform: translateY(-50%);">9</div>
+                            </div>
+                            <div class="hour-hand" id="hour-hand"></div>
+                            <div class="minute-hand" id="minute-hand"></div>
+                            <div class="center-dot"></div>
+                        </div>
+                    </div>
+                    <div class="instruction">請選擇正確的時間</div>
+                    <div class="timer" id="timer">反應時間: 0.0秒</div>
+                </div>
+
+                <div class="options-container" id="options-container">
+                    <!-- 時間選項將由 JavaScript 生成 -->
+                </div>
+            </div>
+        </div>
+
+        <div id="results-screen" class="hidden">
+            <div class="final-results">
+                <h2>🎉 遊戲完成！</h2>
+                <div class="result-item">
+                    <span>總題數:</span>
+                    <span id="final-total">20</span>
+                </div>
+                <div class="result-item">
+                    <span>正確答案:</span>
+                    <span id="final-correct">0</span>
+                </div>
+                <div class="result-item">
+                    <span>正確率:</span>
+                    <span id="final-accuracy">0%</span>
+                </div>
+                <div class="result-item">
+                    <span>總反應時間:</span>
+                    <span id="final-total-time">0.0秒</span>
+                </div>
+                <div class="result-item">
+                    <span>平均反應時間:</span>
+                    <span id="final-avg-time">0.0秒</span>
+                </div>
+                <div class="result-item">
+                    <span>最快反應時間:</span>
+                    <span id="final-fastest">0.0秒</span>
+                </div>
+                <div class="result-item">
+                    <span>最慢反應時間:</span>
+                    <span id="final-slowest">0.0秒</span>
+                </div>
+            </div>
+            <button class="restart-btn" onclick="restartGame()">重新挑戰</button>
+            <a href="index.html" class="restart-btn" style="text-decoration: none; display: inline-block;">回到主頁</a>
+        </div>
+    </div>
+
+    <script>
+        class TimeTest {
+            constructor() {
+                this.totalQuestions = 20;
+                this.currentQuestion = 0;
+                this.correctAnswers = 0;
+                this.responseTimes = [];
+                this.startTime = 0;
+                this.currentHour = 0;
+                this.currentMinute = 0;
+                this.correctAnswer = '';
+                this.gameActive = false;
+                this.timerInterval = null;
+            }
+
+            startGame() {
+                this.currentQuestion = 0;
+                this.correctAnswers = 0;
+                this.responseTimes = [];
+                this.gameActive = true;
+
+                document.getElementById('welcome-screen').classList.add('hidden');
+                document.getElementById('results-screen').classList.add('hidden');
+                document.getElementById('game-screen').classList.remove('hidden');
+
+                this.nextQuestion();
+            }
+
+            nextQuestion() {
+                if (this.currentQuestion >= this.totalQuestions) {
+                    this.endGame();
+                    return;
+                }
+
+                this.currentQuestion++;
+                this.updateProgress();
+                this.generateTime();
+                this.updateClock();
+                this.generateOptions();
+                this.startTimer();
+            }
+
+            generateTime() {
+                // 生成整點或半點時間
+                this.currentHour = Math.floor(Math.random() * 12) + 1;
+                this.currentMinute = Math.random() < 0.5 ? 0 : 30;
+                
+                // 格式化時間字串
+                const displayHour = this.currentHour;
+                const displayMinute = this.currentMinute === 0 ? '00' : '30';
+                this.correctAnswer = `${displayHour}:${displayMinute}`;
+                
+                document.getElementById('current-question').textContent = this.currentQuestion;
+            }
+
+            updateClock() {
+                const hourHand = document.getElementById('hour-hand');
+                const minuteHand = document.getElementById('minute-hand');
+                
+                // 計算指針角度
+                const hourAngle = (this.currentHour % 12) * 30 + (this.currentMinute / 60) * 30;
+                const minuteAngle = this.currentMinute * 6;
+                
+                hourHand.style.transform = `translateX(-50%) rotate(${hourAngle}deg)`;
+                minuteHand.style.transform = `translateX(-50%) rotate(${minuteAngle}deg)`;
+            }
+
+            generateOptions() {
+                const optionsContainer = document.getElementById('options-container');
+                optionsContainer.innerHTML = '';
+
+                // 創建包含正確答案的選項陣列
+                const options = [this.correctAnswer];
+                
+                // 添加3個錯誤答案
+                while (options.length < 4) {
+                    const wrongHour = Math.floor(Math.random() * 12) + 1;
+                    const wrongMinute = Math.random() < 0.5 ? 0 : 30;
+                    const wrongAnswer = `${wrongHour}:${wrongMinute === 0 ? '00' : '30'}`;
+                    
+                    if (!options.includes(wrongAnswer)) {
+                        options.push(wrongAnswer);
+                    }
+                }
+
+                // 打亂陣列順序
+                this.shuffleArray(options);
+
+                // 創建選項按鈕
+                options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.className = 'time-option';
+                    button.textContent = option;
+                    button.onclick = () => this.selectAnswer(option, button);
+                    optionsContainer.appendChild(button);
+                });
+            }
+
+            shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            selectAnswer(selectedTime, buttonElement) {
+                if (!this.gameActive) return;
+
+                this.gameActive = false;
+                this.stopTimer();
+
+                const responseTime = (Date.now() - this.startTime) / 1000;
+                this.responseTimes.push(responseTime);
+
+                const isCorrect = selectedTime === this.correctAnswer;
+
+                if (isCorrect) {
+                    this.correctAnswers++;
+                    buttonElement.classList.add('correct');
+                } else {
+                    buttonElement.classList.add('wrong');
+                    // 標示正確答案
+                    const buttons = document.querySelectorAll('.time-option');
+                    buttons.forEach(button => {
+                        if (button.textContent === this.correctAnswer) {
+                            button.classList.add('correct');
+                        }
+                    });
+                }
+
+                this.updateStats();
+
+                // 1.5秒後進入下一題
+                setTimeout(() => {
+                    this.nextQuestion();
+                }, 1500);
+            }
+
+            startTimer() {
+                this.startTime = Date.now();
+                this.gameActive = true;
+                
+                // 更新計時器顯示
+                this.timerInterval = setInterval(() => {
+                    if (this.gameActive) {
+                        const elapsed = (Date.now() - this.startTime) / 1000;
+                        document.getElementById('timer').textContent = `反應時間: ${elapsed.toFixed(1)}秒`;
+                    }
+                }, 100);
+            }
+
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+            }
+
+            updateProgress() {
+                const progress = (this.currentQuestion / this.totalQuestions) * 100;
+                document.getElementById('progress-fill').style.width = progress + '%';
+            }
+
+            updateStats() {
+                const accuracy = ((this.correctAnswers / this.currentQuestion) * 100).toFixed(0);
+                document.getElementById('accuracy').textContent = accuracy + '%';
+
+                if (this.responseTimes.length > 0) {
+                    const avgTime = this.responseTimes.reduce((a, b) => a + b, 0) / this.responseTimes.length;
+                    document.getElementById('avg-time').textContent = avgTime.toFixed(1) + '秒';
+                }
+            }
+
+            endGame() {
+                this.stopTimer();
+                document.getElementById('game-screen').classList.add('hidden');
+                document.getElementById('results-screen').classList.remove('hidden');
+
+                // 計算統計數據
+                const totalTime = this.responseTimes.reduce((a, b) => a + b, 0);
+                const avgTime = totalTime / this.responseTimes.length;
+                const fastestTime = Math.min(...this.responseTimes);
+                const slowestTime = Math.max(...this.responseTimes);
+                const accuracy = ((this.correctAnswers / this.totalQuestions) * 100).toFixed(0);
+
+                // 顯示最終結果
+                document.getElementById('final-total').textContent = this.totalQuestions;
+                document.getElementById('final-correct').textContent = this.correctAnswers;
+                document.getElementById('final-accuracy').textContent = accuracy + '%';
+                document.getElementById('final-total-time').textContent = totalTime.toFixed(1) + '秒';
+                document.getElementById('final-avg-time').textContent = avgTime.toFixed(1) + '秒';
+                document.getElementById('final-fastest').textContent = fastestTime.toFixed(1) + '秒';
+                document.getElementById('final-slowest').textContent = slowestTime.toFixed(1) + '秒';
+            }
+
+            restartGame() {
+                document.getElementById('results-screen').classList.add('hidden');
+                document.getElementById('welcome-screen').classList.remove('hidden');
+            }
+        }
+
+        // 創建遊戲實例
+        const game = new TimeTest();
+
+        // 全域函數
+        function startGame() {
+            game.startGame();
+        }
+
+        function restartGame() {
+            game.restartGame();
+        }
+    </script>
+</body>
+</html>

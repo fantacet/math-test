@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>豆豆數學大挑戰 - 兒童數學練習遊戲</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .main-title {
+            text-align: center;
+            color: white;
+            font-size: 4em;
+            font-weight: bold;
+            margin-bottom: 50px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        /* 標題旁的圖示 */
+        .title-icon {
+            width: 100px;
+            height: auto;
+            margin-right: 20px;
+            vertical-align: middle;
+            transition: transform 0.3s ease;
+        }
+        .title-icon:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        /* 標題與圖示包裹 */
+        .title-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        @keyframes titleGlow {
+            from { text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+            to { text-shadow: 2px 2px 20px rgba(255,255,255,0.5); }
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .game-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s;
+        }
+
+        .game-card:hover::before {
+            left: 100%;
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .game-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .game-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .game-description {
+            color: #666;
+            font-size: 1.1em;
+            line-height: 1.4;
+        }
+
+        .difficulty {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .easy { background: #e8f5e8; color: #2e7d32; }
+        .medium { background: #fff3e0; color: #f57c00; }
+        .hard { background: #ffebee; color: #c62828; }
+
+        .available {
+            background: linear-gradient(145deg, #4ecdc4, #44a08d);
+        }
+
+        .coming-soon {
+            background: linear-gradient(145deg, #95a5a6, #7f8c8d);
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .coming-soon .game-title::after {
+            content: " (即將推出)";
+            font-size: 0.7em;
+            color: #7f8c8d;
+        }
+
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 2.5em;
+            }
+            
+            .games-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+            
+            .game-card {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title-wrapper">
+            <img src="resource/omnom.png" alt="Omnom" class="title-icon">
+            <h1 class="main-title">豆豆數學大挑戰</h1>
+        </div>
+        
+        <div class="games-grid">
+            <!-- 第一排 -->
+            <a href="ten-perfect.html" class="game-card available">
+                <span class="game-icon">🎯</span>
+                <div class="game-title">十全十美</div>
+                <div class="game-description">選擇數字卡片，湊成10的加法練習</div>
+                <span class="difficulty easy">簡單</span>
+            </a>
+
+            <a href="time-mystery.html" class="game-card available">
+                <span class="game-icon">⏰</span>
+                <div class="game-title">時間之謎</div>
+                <div class="game-description">認識時間與時鐘讀法訓練</div>
+                <span class="difficulty easy">簡單</span>
+            </a>
+
+            <a href="number-compare.html" class="game-card available">
+                <span class="game-icon">🔢</span>
+                <div class="game-title">數字比大小</div>
+                <div class="game-description">比較三位數以內數字大小關係</div>
+                <span class="difficulty easy">簡單</span>
+            </a>
+
+            <a href="addition-master.html" class="game-card available">
+                <span class="game-icon">➕</span>
+                <div class="game-title">加法小達人</div>
+                <div class="game-description">兩位數加法運算練習</div>
+                <span class="difficulty medium">中等</span>
+            </a>
+
+            <a href="subtraction-master.html" class="game-card available">
+                <span class="game-icon">➖</span>
+                <div class="game-title">減法大師</div>
+                <div class="game-description">減法運算速度挑戰</div>
+                <span class="difficulty medium">中等</span>
+            </a>
+
+            <!-- 第二排 -->
+            <div class="game-card coming-soon">
+                <span class="game-icon">✖️</span>
+                <div class="game-title">乘法表王</div>
+                <div class="game-description">九九乘法表背誦練習</div>
+                <span class="difficulty hard">困難</span>
+            </div>
+
+            <div class="game-card coming-soon">
+                <span class="game-icon">➗</span>
+                <div class="game-title">除法精靈</div>
+                <div class="game-description">除法運算與餘數練習</div>
+                <span class="difficulty hard">困難</span>
+            </div>
+
+            <div class="game-card coming-soon">
+                <span class="game-icon">🧮</span>
+                <div class="game-title">心算闖關</div>
+                <div class="game-description">混合四則運算心算</div>
+                <span class="difficulty hard">困難</span>
+            </div>
+
+            <!-- 第三排 -->
+            <div class="game-card coming-soon">
+                <span class="game-icon">📊</span>
+                <div class="game-title">圖表解讀</div>
+                <div class="game-description">讀懂簡單統計圖表</div>
+                <span class="difficulty medium">中等</span>
+            </div>
+
+            <div class="game-card coming-soon">
+                <span class="game-icon">💰</span>
+                <div class="game-title">錢幣計算</div>
+                <div class="game-description">認識貨幣與找零練習</div>
+                <span class="difficulty medium">中等</span>
+            </div>
+
+            <div class="game-card coming-soon">
+                <span class="game-icon">📐</span>
+                <div class="game-title">幾何探險</div>
+                <div class="game-description">認識基本幾何圖形</div>
+                <span class="difficulty medium">中等</span>
+            </div>
+
+            <div class="game-card coming-soon">
+                <span class="game-icon">🧩</span>
+                <div class="game-title">邏輯推理</div>
+                <div class="game-description">數學邏輯思考訓練</div>
+                <span class="difficulty hard">困難</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

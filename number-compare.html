@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數字比大小 - 豆豆數學大挑戰</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            text-align: center;
+            max-width: 700px;
+            width: 100%;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .instruction {
+            font-size: 1.3em;
+            line-height: 1.6;
+            color: #555;
+            margin-bottom: 30px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-item div:first-child {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .progress-bar {
+            background: #ecf0f1;
+            border-radius: 25px;
+            height: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(145deg, #4ecdc4, #44a08d);
+            height: 100%;
+            border-radius: 25px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .question-display {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .question {
+            font-size: 2em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .timer {
+            font-size: 1.2em;
+            color: #e74c3c;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .numbers-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 400px;
+            margin: 30px auto;
+        }
+
+        .number-card {
+            background: linear-gradient(145deg, #ff6b6b, #ee5a52);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 30px 20px;
+            font-size: 2.5em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+            box-shadow: 0 8px 15px rgba(238, 90, 82, 0.3);
+        }
+
+        .number-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(238, 90, 82, 0.4);
+        }
+
+        .number-card.correct {
+            background: linear-gradient(145deg, #4caf50, #45a049);
+            animation: correctPulse 0.6s ease;
+        }
+
+        .number-card.wrong {
+            background: linear-gradient(145deg, #f44336, #da190b);
+            animation: shake 0.6s ease;
+        }
+
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .start-btn, .restart-btn {
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.3em;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            margin: 10px;
+        }
+
+        .start-btn:hover, .restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .final-results {
+            background: #e8f5e8;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 20px;
+            border-left: 5px solid #4caf50;
+        }
+
+        .final-results h2 {
+            color: #2e7d32;
+            margin-bottom: 20px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .numbers-container {
+                grid-template-columns: 1fr;
+                max-width: 300px;
+            }
+            
+            .number-card {
+                font-size: 2em;
+                padding: 20px;
+            }
+            
+            .question {
+                font-size: 1.5em;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-button">← 返回主頁</a>
+    
+    <div class="container">
+        <h1>🔢 數字比大小</h1>
+        
+        <div id="welcome-screen">
+            <div class="instruction">
+                <p>
+                    歡迎來到數字比大小遊戲！<br>
+                    系統會同時顯示四個三位數以內的數字，<br>
+                    請根據題目要求選擇<strong>最大</strong>或<strong>最小</strong>的數字。<br>
+                    總共有 <strong>20</strong> 題，我們會記錄你的反應時間！
+                </p>
+            </div>
+            <button class="start-btn" onclick="startGame()">開始遊戲</button>
+        </div>
+
+        <div id="game-screen" class="hidden">
+            <div class="stats">
+                <div class="stat-item">
+                    <div>題目</div>
+                    <div class="stat-value" id="current-question">1</div>
+                </div>
+                <div class="stat-item">
+                    <div>正確率</div>
+                    <div class="stat-value" id="accuracy">100%</div>
+                </div>
+                <div class="stat-item">
+                    <div>平均反應時間</div>
+                    <div class="stat-value" id="avg-time">0.0秒</div>
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+
+            <div class="question-display">
+                <div class="question" id="question">請選擇最大的數字</div>
+                <div class="timer" id="timer">反應時間: 0.0秒</div>
+            </div>
+
+            <div class="numbers-container" id="numbersContainer">
+                <!-- 數字卡片將由JavaScript生成 -->
+            </div>
+        </div>
+
+        <div id="results-screen" class="hidden">
+            <div class="final-results">
+                <h2>🎉 遊戲完成！</h2>
+                <div class="result-item">
+                    <span>總題數:</span>
+                    <span id="final-total">20</span>
+                </div>
+                <div class="result-item">
+                    <span>正確答案:</span>
+                    <span id="final-correct">0</span>
+                </div>
+                <div class="result-item">
+                    <span>正確率:</span>
+                    <span id="final-accuracy">0%</span>
+                </div>
+                <div class="result-item">
+                    <span>總反應時間:</span>
+                    <span id="final-total-time">0.0秒</span>
+                </div>
+                <div class="result-item">
+                    <span>平均反應時間:</span>
+                    <span id="final-avg-time">0.0秒</span>
+                </div>
+                <div class="result-item">
+                    <span>最快反應時間:</span>
+                    <span id="final-fastest">0.0秒</span>
+                </div>
+                <div class="result-item">
+                    <span>最慢反應時間:</span>
+                    <span id="final-slowest">0.0秒</span>
+                </div>
+                <button class="restart-btn" onclick="restartGame()">再玩一次</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class NumberCompareGame {
+            constructor() {
+                this.currentNumbers = [];
+                this.correctAnswer = 0;
+                this.isAnswering = false;
+                this.questionStartTime = 0;
+                this.totalQuestions = 20;
+                this.currentQuestion = 0;
+                this.correctAnswers = 0;
+                this.responseTimes = [];
+                this.gameActive = false;
+                this.timerInterval = null;
+                this.startTime = 0;
+            }
+
+            generateRandomNumber() {
+                return Math.floor(Math.random() * 999) + 1; // 1-999的三位數以內
+            }
+
+            startGame() {
+                document.getElementById('welcome-screen').classList.add('hidden');
+                document.getElementById('game-screen').classList.remove('hidden');
+                
+                this.currentQuestion = 0;
+                this.correctAnswers = 0;
+                this.responseTimes = [];
+                
+                this.nextQuestion();
+            }
+
+            generateQuestion() {
+                // 檢查是否已完成20題
+                if (this.currentQuestion >= this.totalQuestions) {
+                    this.endGame();
+                    return;
+                }
+
+                this.currentQuestion++;
+                this.isAnswering = true;
+                
+                // 生成四個不同的隨機數字
+                this.currentNumbers = [];
+                while (this.currentNumbers.length < 4) {
+                    const num = this.generateRandomNumber();
+                    if (!this.currentNumbers.includes(num)) {
+                        this.currentNumbers.push(num);
+                    }
+                }
+
+                // 隨機決定要找最大還是最小的數字
+                const isMax = Math.random() < 0.5;
+                const questionText = isMax ? '請選擇最大的數字' : '請選擇最小的數字';
+                document.getElementById('question').textContent = questionText;
+                
+                // 計算正確答案
+                this.correctAnswer = isMax ? Math.max(...this.currentNumbers) : Math.min(...this.currentNumbers);
+                
+                // 生成數字卡片
+                this.generateNumberCards();
+                
+                // 更新進度和統計
+                this.updateProgress();
+                this.updateCurrentQuestion();
+                
+                // 開始計時
+                this.startTimer();
+            }
+
+            generateNumberCards() {
+                const container = document.getElementById('numbersContainer');
+                container.innerHTML = '';
+                
+                // 打亂數字順序
+                const shuffledNumbers = [...this.currentNumbers].sort(() => Math.random() - 0.5);
+                
+                shuffledNumbers.forEach(number => {
+                    const card = document.createElement('div');
+                    card.className = 'number-card';
+                    card.textContent = number;
+                    card.onclick = () => this.selectNumber(number, card);
+                    container.appendChild(card);
+                });
+            }
+
+            selectNumber(selectedNumber, cardElement) {
+                if (!this.isAnswering) return;
+                
+                this.isAnswering = false;
+                this.stopTimer();
+                
+                const reactionTime = (Date.now() - this.questionStartTime) / 1000;
+                this.responseTimes.push(reactionTime);
+                
+                // 檢查答案
+                const isCorrect = selectedNumber === this.correctAnswer;
+                
+                // 標記所有卡片
+                const allCards = document.querySelectorAll('.number-card');
+                allCards.forEach(card => {
+                    const cardNumber = parseInt(card.textContent);
+                    if (cardNumber === this.correctAnswer) {
+                        card.classList.add('correct');
+                    } else if (card === cardElement && !isCorrect) {
+                        card.classList.add('wrong');
+                    }
+                    card.onclick = null; // 禁用點擊
+                });
+                
+                if (isCorrect) {
+                    this.correctAnswers++;
+                }
+                
+                this.updateStats();
+                
+                // 1.5秒後進入下一題
+                setTimeout(() => {
+                    this.nextQuestion();
+                }, 1500);
+            }
+
+            startTimer() {
+                this.questionStartTime = Date.now();
+                this.gameActive = true;
+                
+                // 更新計時器顯示
+                this.timerInterval = setInterval(() => {
+                    if (this.gameActive) {
+                        const elapsed = (Date.now() - this.questionStartTime) / 1000;
+                        document.getElementById('timer').textContent = `反應時間: ${elapsed.toFixed(1)}秒`;
+                    }
+                }, 100);
+            }
+
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+                this.gameActive = false;
+            }
+
+            updateProgress() {
+                const progress = (this.currentQuestion / this.totalQuestions) * 100;
+                document.getElementById('progress-fill').style.width = progress + '%';
+            }
+
+            updateCurrentQuestion() {
+                document.getElementById('current-question').textContent = this.currentQuestion;
+            }
+
+            updateStats() {
+                const accuracy = ((this.correctAnswers / this.currentQuestion) * 100).toFixed(0);
+                document.getElementById('accuracy').textContent = accuracy + '%';
+
+                if (this.responseTimes.length > 0) {
+                    const avgTime = this.responseTimes.reduce((a, b) => a + b, 0) / this.responseTimes.length;
+                    document.getElementById('avg-time').textContent = avgTime.toFixed(1) + '秒';
+                }
+            }
+
+            nextQuestion() {
+                if (this.currentQuestion >= this.totalQuestions) {
+                    this.endGame();
+                } else {
+                    this.generateQuestion();
+                }
+            }
+
+            endGame() {
+                this.stopTimer();
+                document.getElementById('game-screen').classList.add('hidden');
+                document.getElementById('results-screen').classList.remove('hidden');
+
+                // 計算統計數據
+                const totalTime = this.responseTimes.reduce((a, b) => a + b, 0);
+                const avgTime = totalTime / this.responseTimes.length;
+                const fastestTime = Math.min(...this.responseTimes);
+                const slowestTime = Math.max(...this.responseTimes);
+                const accuracy = ((this.correctAnswers / this.totalQuestions) * 100).toFixed(0);
+
+                // 顯示最終結果
+                document.getElementById('final-total').textContent = this.totalQuestions;
+                document.getElementById('final-correct').textContent = this.correctAnswers;
+                document.getElementById('final-accuracy').textContent = accuracy + '%';
+                document.getElementById('final-total-time').textContent = totalTime.toFixed(1) + '秒';
+                document.getElementById('final-avg-time').textContent = avgTime.toFixed(1) + '秒';
+                document.getElementById('final-fastest').textContent = fastestTime.toFixed(1) + '秒';
+                document.getElementById('final-slowest').textContent = slowestTime.toFixed(1) + '秒';
+            }
+
+            restartGame() {
+                document.getElementById('results-screen').classList.add('hidden');
+                document.getElementById('welcome-screen').classList.remove('hidden');
+            }
+        }
+
+        // 創建遊戲實例
+        const game = new NumberCompareGame();
+
+        // 全域函數
+        function startGame() {
+            game.startGame();
+        }
+
+        function restartGame() {
+            game.restartGame();
+        }
+
+        // 鍵盤支援
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>
