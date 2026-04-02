@@ -1,0 +1,28 @@
+TESTING STEPS — Math Test (local)
+
+1. Open the project index: open D:\code\math test\index.html in your browser.
+2. Force-refresh the page (Ctrl+F5 / Shift+Reload) to clear cache.
+3. Confirm page loads without console errors (open DevTools → Console).
+4. Identify each "New Game" entry on the page.
+5. Click the first New Game link/tile.
+6. Click "Start" to begin the game.
+7. Repeat steps 5–6 for every New Game available.
+8. While playing, verify keyboard controls: number keys (answers), Enter to submit, Backspace to edit, Esc or P to pause/resume (or app-specific keys).
+9. Check navigation keys if present (arrow keys, Tab) behave as expected.
+10. Complete a run aiming for ≥70% correct answers.
+11. Confirm confetti animation appears when score >= 70%.
+12. Open DevTools → Application (or Storage) and inspect localStorage.
+13. Verify keys exist: "math_test_session_score" and "math_test_muted".
+14. Note values update after finishing a game (session score reflects last run).
+15. Toggle the mute control in the UI.
+16. Reload the page and confirm "math_test_muted" persists and audio stays muted/unmuted accordingly.
+17. Repeat a game with sound unmuted to ensure audio plays when not muted.
+18. Emulate mobile: open DevTools → Toggle device toolbar and select a narrow width (e.g., 375px).
+19. On mobile emulation, repeat Start game and basic controls (tap targets, on-screen buttons) to ensure playability.
+20. Verify layout fits narrow screen and no buttons are off-screen or overlapped.
+21. Reload in mobile emulation and confirm mute persistence and localStorage behavior.
+22. Check for any visual regressions during game end screens (scores, confetti, buttons).
+23. Open DevTools → Network and ensure no failing requests when loading or starting games.
+24. If issues found, capture screenshots and console/network logs for debugging.
+
+End of checklist.

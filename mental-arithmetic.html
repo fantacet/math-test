@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>心算闖關 - 豆豆數學</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:18px;padding:18px;background:#fffaf6;color:#111827}
+    header{display:flex;gap:12px;align-items:center}
+    h1{font-size:2rem}
+    .question{font-size:2rem;padding:20px;background:#fff;border-radius:12px;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
+    .choices{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
+    .choice{padding:12px;background:#f1f5f9;border-radius:10px;border:1px solid #e2e8f0;cursor:pointer}
+    .timer{height:8px;background:#e6e6e6;border-radius:6px;overflow:hidden;margin-top:10px}
+    .timer>i{display:block;height:100%;background:#f97316;width:100%}
+    .footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+    .result-modal{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:opacity .18s}
+    .result-modal.show{visibility:visible;opacity:1}
+    .modal-card{background:white;padding:18px;border-radius:12px;width:340px;text-align:center}
+  .global-ui { position: absolute; top: 18px; right: 18px; display: flex; gap: 10px; align-items: center; z-index: 1000; }
+  .mute-btn { background: rgba(255,255,255,0.9); border: none; padding: 8px 10px; border-radius: 12px; font-size: 1.1em; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.12);} 
+  .star-counter { background: rgba(255,255,255,0.95); padding: 6px 10px; border-radius: 12px; font-weight: bold; font-size: 1.1em; }
+  .encouragement { position: absolute; left: 16px; top: -10px; background: rgba(255,255,255,0.95); padding: 8px 12px; border-radius: 12px; font-size: 1.1em; transform-origin: left top; box-shadow: 0 6px 14px rgba(0,0,0,0.15); pointer-events: none; opacity: 0; transition: transform 0.35s ease, opacity 0.35s ease; }
+  .encouragement.show { opacity: 1; transform: translateY(-8px) scale(1); }
+  .confetti-container { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 900; }
+  .confetti-particle { position: absolute; width: 10px; height: 14px; border-radius: 2px; opacity: 0.95; transform-origin: center; will-change: transform, opacity; }
+  .floating-star { position: absolute; font-size: 1.6em; pointer-events: none; animation: floatUp 900ms ease forwards; }
+  @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1;} 100% { transform: translateY(-60px) scale(1.2); opacity: 0;} }
+  .performance-badge { font-size: 2em; margin-top: 8px; display: inline-block; }
+  </style>
+  <link rel="stylesheet" href="resource/game-core.css">
+</head>
+<body>
+  <!-- BEGIN quick-wins global UI -->
+  <div class="global-ui" aria-hidden="false">
+    <button id="muteToggle" class="mute-btn" title="靜音/開聲">🔊</button>
+    <div id="starCounter" class="star-counter">⭐ 0</div>
+  </div>
+  <div style="position: relative;">
+    <div id="encouragement" class="encouragement" aria-live="polite"></div>
+    <div id="confetti" class="confetti-container"></div>
+  </div>
+  <header>
+    <a href="index.html">← 回到首頁</a>
+    <h1>心算闖關</h1>
+  </header>
+  <p>選擇難度並開始。中等/困難每題有倒數時間。鍵盤 1-4 選答案。</p>
+
+  <div class="controls">
+    <button class="diff-btn" data-diff="easy">簡單</button>
+    <button class="diff-btn" data-diff="medium">中等</button>
+    <button class="diff-btn" data-diff="hard">困難</button>
+    <button id="startBtn" style="float:right;padding:6px 12px;border-radius:8px;background:#ef4444;color:#fff;border:none">Start</button>
+  </div>
+
+  <div id="playArea">
+    <div id="question" class="question">按 Start 開始遊戲</div>
+    <div class="timer" aria-hidden="true"><i id="timerBar" style="width:0%"></i></div>
+    <div id="choices" class="choices" role="list"></div>
+    <div class="footer"><div class="progress">Q <span id="cur">0</span>/10</div><div id="feedback" aria-live="polite"></div></div>
+  </div>
+
+  <div id="resultModal" class="result-modal" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <h2>結果</h2>
+      <p id="resultSummary"></p>
+      <div style="margin-top:12px">
+        <button id="retryBtn">再一次</button>
+        <a href="index.html" style="margin-left:8px"><button>回首頁</button></a>
+      </div>
+    </div>
+  </div>
+
+  <script src="resource/game-core.js"></script>
+  <script>
+  const Q = getQuickWins();
+
+  const TOTAL = 10; let questions=[], curIndex=0, score=0, difficulty='easy';
+  const startBtn = document.getElementById('startBtn');
+  const choicesEl = document.getElementById('choices');
+  const questionEl = document.getElementById('question');
+  const curEl = document.getElementById('cur');
+  const feedback = document.getElementById('feedback');
+  const modal = document.getElementById('resultModal');
+  const resultSummary = document.getElementById('resultSummary');
+  const retryBtn = document.getElementById('retryBtn');
+  const timerBar = document.getElementById('timerBar');
+  let timerHandle = null; let timeLeft = 0; let timeLimit = 0;
+
+  document.querySelectorAll('.diff-btn').forEach(b=> b.addEventListener('click', ()=>{ document.querySelectorAll('.diff-btn').forEach(x=>x.style.boxShadow=''); b.style.boxShadow='inset 0 0 0 2px #ef4444'; difficulty = b.dataset.diff; }));
+
+  function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
+
+  function makeQuestions(){ questions = []; for (let i=0;i<TOTAL;i++){ let expr, answer;
+      if (difficulty==='easy'){
+        // single operation + or - or * small numbers
+        const a = randInt(1,12), b = randInt(1,12); const ops = ['+','-','*']; const op = ops[randInt(0, ops.length-1)]; expr = `${a} ${op} ${b}`; answer = eval(expr.replace(/\*/g,'*'));
+      } else if (difficulty==='medium'){
+        // two operations, ensure integer results
+        const a = randInt(1,15), b = randInt(1,12), c = randInt(1,12); const ops = ['+','-','*']; const op1 = ops[randInt(0,ops.length-1)]; const op2 = ops[randInt(0,ops.length-1)]; expr = `${a} ${op1} ${b} ${op2} ${c}`; answer = eval(expr.replace(/\*/g,'*'));
+      } else {
+        // three operations
+        const a = randInt(1,20), b = randInt(1,15), c = randInt(1,12), d = randInt(1,10); const ops = ['+','-','*']; const op1=ops[randInt(0,2)], op2=ops[randInt(0,2)], op3=ops[randInt(0,2)]; expr = `${a} ${op1} ${b} ${op2} ${c} ${op3} ${d}`; answer = eval(expr.replace(/\*/g,'*'));
+      }
+      // ensure integer answer
+      answer = Math.round(answer);
+      // make choices
+      const choices = new Set([answer]); while (choices.size < 4){ choices.add(answer + randInt(-10,10)); }
+      const arr = Array.from(choices);
+      for (let j=arr.length-1;j>0;j--){ const k = Math.floor(Math.random()*(j+1)); [arr[j],arr[k]]=[arr[k],arr[j]] }
+      questions.push({expr, answer, choices: arr}); }
+  }
+
+  function startTimerForDifficulty(){ if (difficulty==='easy'){ timeLimit = 0; timerBar.style.width='0%'; } else if (difficulty==='medium'){ timeLimit = 8; } else { timeLimit = 6; } }
+
+  function renderQuestion(){
+    clearTimer();
+    const q = questions[curIndex];
+    questionEl.textContent = q.expr.replace(/\*/g,'×');
+    choicesEl.innerHTML='';
+    q.choices.forEach((c,i)=>{ const btn=document.createElement('button'); btn.className='choice'; btn.textContent = `${i+1}. ${c}`; btn.dataset.value=c; btn.addEventListener('click', ()=>handleAnswer(c, btn)); btn.tabIndex=0; choicesEl.appendChild(btn); });
+    curEl.textContent = curIndex+1; feedback.textContent='';
+    // start timer if limited
+    startTimerForDifficulty(); if (timeLimit>0){ timeLeft = timeLimit; timerBar.style.width = '100%'; timerHandle = setInterval(()=>{ timeLeft -= 0.12; const pct = Math.max(0, (timeLeft/timeLimit)*100); timerBar.style.width = pct + '%'; if (timeLeft <= 0){ clearTimer(); // treat as wrong and move on
+          feedback.textContent='時間到！'; Q.playWrong(); Q.encourage(false); // highlight nothing
+          Array.from(choicesEl.children).forEach(b=>b.disabled=true);
+          setTimeout(()=>{ curIndex++; if (curIndex < TOTAL) renderQuestion(); else showResult(); }, 700);
+        } }, 120); }
+    // focus first
+    setTimeout(()=>{ const f = choicesEl.querySelector('button'); if (f) f.focus(); },80);
+  }
+
+  function clearTimer(){ if (timerHandle) { clearInterval(timerHandle); timerHandle = null; } }
+
+  function handleAnswer(val, btnEl){ const q = questions[curIndex]; Array.from(choicesEl.children).forEach(b=>b.disabled=true); clearTimer(); if (val === q.answer){ btnEl.style.background='#dff7df'; score++; Q.playCorrect(); Q.awardStar(1); Q.encourage(true); feedback.textContent='答對！'; } else { btnEl.style.background='#ffe6e6'; Q.playWrong(); Q.encourage(false); feedback.textContent=`答錯，正確 ${q.answer}`; } setTimeout(()=>{ curIndex++; if (curIndex < TOTAL) renderQuestion(); else showResult(); }, 800);
+  }
+
+  function showResult(){ resultSummary.textContent = `你答對 ${score} / ${TOTAL} 題`; modal.classList.add('show'); if (score >= Math.ceil(TOTAL*0.7)){ Q.confetti(); Q.playLevelUp(); } }
+
+  function startGame(){ curIndex=0; score=0; makeQuestions(); renderQuestion(); modal.classList.remove('show'); }
+
+  // keyboard 1-4
+  document.addEventListener('keydown', function(e){ if (modal.classList.contains('show')) return; if (!/^[1-4]$/.test(e.key) && e.key !== 'Enter') return; if (/^[1-4]$/.test(e.key)){ const idx = parseInt(e.key,10)-1; const btn = choicesEl.children[idx]; if (btn) btn.click(); } });
+
+  startBtn.addEventListener('click', function(){ Q.playClick && Q.playClick(); startGame(); });
+  retryBtn.addEventListener('click', function(){ Q.playClick && Q.playClick(); startGame(); modal.classList.remove('show'); });
+
+  </script>
+</body>
+</html>

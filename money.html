@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>錢幣計算 - 豆豆數學</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:18px;padding:18px;background:#f7fff7;color:#1f2937}
+    header{display:flex;align-items:center;gap:12px}
+    .coins{display:flex;gap:8px;margin-top:12px}
+    .coin{padding:12px 16px;border-radius:10px;background:#fff;border:1px solid #ddd;cursor:pointer}
+    .coin:focus{outline:2px solid #60a5fa}
+    .target{font-size:1.6rem;margin-top:10px}
+    .slot{margin-top:12px;padding:10px;background:#fff;border-radius:8px;min-height:52px}
+    .controls{display:flex;gap:8px;margin-top:12px}
+    .result-modal{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:opacity .2s}
+    .result-modal.show{visibility:visible;opacity:1}
+    .modal-card{background:white;padding:18px;border-radius:12px;width:320px;text-align:center}
+  .global-ui { position: absolute; top: 18px; right: 18px; display: flex; gap: 10px; align-items: center; z-index: 1000; }
+  .mute-btn { background: rgba(255,255,255,0.9); border: none; padding: 8px 10px; border-radius: 12px; font-size: 1.1em; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.12);} 
+  .star-counter { background: rgba(255,255,255,0.95); padding: 6px 10px; border-radius: 12px; font-weight: bold; font-size: 1.1em; }
+  .encouragement { position: absolute; left: 16px; top: -10px; background: rgba(255,255,255,0.95); padding: 8px 12px; border-radius: 12px; font-size: 1.1em; transform-origin: left top; box-shadow: 0 6px 14px rgba(0,0,0,0.15); pointer-events: none; opacity: 0; transition: transform 0.35s ease, opacity 0.35s ease; }
+  .encouragement.show { opacity: 1; transform: translateY(-8px) scale(1); }
+  .confetti-container { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 900; }
+  .confetti-particle { position: absolute; width: 10px; height: 14px; border-radius: 2px; opacity: 0.95; transform-origin: center; will-change: transform, opacity; }
+  .floating-star { position: absolute; font-size: 1.6em; pointer-events: none; animation: floatUp 900ms ease forwards; }
+  @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1;} 100% { transform: translateY(-60px) scale(1.2); opacity: 0;} }
+  .performance-badge { font-size: 2em; margin-top: 8px; display: inline-block; }
+  </style>
+  <link rel="stylesheet" href="resource/game-core.css">
+</head>
+<body>
+  <!-- BEGIN quick-wins global UI -->
+  <div class="global-ui" aria-hidden="false">
+    <button id="muteToggle" class="mute-btn" title="靜音/開聲">🔊</button>
+    <div id="starCounter" class="star-counter">⭐ 0</div>
+  </div>
+  <div style="position: relative;">
+    <div id="encouragement" class="encouragement" aria-live="polite"></div>
+    <div id="confetti" class="confetti-container"></div>
+  </div>
+  <header>
+    <a href="index.html">← 回到首頁</a>
+    <h1>錢幣計算</h1>
+  </header>
+  <p>將正確的錢幣加入槽中以湊成目標金額。按對的可以獲得星星 ⭐。鍵盤數字鍵 1-5 可快速加入不同面額的錢幣。</p>
+
+  <div class="target">目標： <strong id="targetAmt">--</strong> 元</div>
+  <div class="coins" role="group" aria-label="可用錢幣">
+    <!-- coins: 1,5,10,20,50 -->
+    <button class="coin" data-value="1">1 元</button>
+    <button class="coin" data-value="5">5 元</button>
+    <button class="coin" data-value="10">10 元</button>
+    <button class="coin" data-value="20">20 元</button>
+    <button class="coin" data-value="50">50 元</button>
+  </div>
+
+  <div class="slot" id="slot">已加入： <span id="slotAmt">0</span> 元</div>
+
+  <div class="controls">
+    <button id="checkBtn">檢查答案</button>
+    <button id="hintBtn">提示</button>
+    <div style="margin-left:auto">Q <span id="cur">0</span>/10</div>
+  </div>
+
+  <div id="resultModal" class="result-modal" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <h2 id="resultTitle">結果</h2>
+      <p id="resultSummary"></p>
+      <div style="margin-top:12px">
+        <button id="nextBtn">下一題</button>
+        <a href="index.html" style="margin-left:8px"><button>回首頁</button></a>
+      </div>
+    </div>
+  </div>
+
+  <script src="resource/game-core.js"></script>
+  <script>
+  const Q = getQuickWins();
+
+  const TOTAL = 10;
+  let cur = 0;
+  let target = 0;
+  let slotAmt = 0;
+  let coinButtons = Array.from(document.querySelectorAll('.coin'));
+
+  const targetEl = document.getElementById('targetAmt');
+  const slotEl = document.getElementById('slotAmt');
+  const curEl = document.getElementById('cur');
+  const modal = document.getElementById('resultModal');
+  const resultSummary = document.getElementById('resultSummary');
+  const nextBtn = document.getElementById('nextBtn');
+
+  function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
+
+  function newRound(){
+    cur++;
+    curEl.textContent = cur;
+    slotAmt = 0; slotEl.textContent = slotAmt;
+    // simple targets between 6 and 99
+    target = randInt(6, 99);
+    targetEl.textContent = target;
+    modal.classList.remove('show');
+  }
+
+  coinButtons.forEach((b, idx)=>{
+    b.addEventListener('click', ()=>{ addCoin(parseInt(b.dataset.value,10)) });
+    b.tabIndex = 0;
+  });
+
+  function addCoin(v){ slotAmt += v; slotEl.textContent = slotAmt; Q.playClick && Q.playClick(); }
+
+  document.getElementById('checkBtn').addEventListener('click', ()=>{
+    if (slotAmt === target){
+      Q.playCorrect(); Q.awardStar(1); Q.encourage(true);
+      resultSummary.textContent = `答對！你湊成了 ${target} 元。`;
+    } else {
+      Q.playWrong(); Q.encourage(false);
+      resultSummary.textContent = `答錯。你放的錢是 ${slotAmt} 元，目標是 ${target} 元。正確組合範例會顯示。`;
+    }
+    modal.classList.add('show');
+  });
+
+  document.getElementById('hintBtn').addEventListener('click', ()=>{
+    // greedy hint: show one valid coin composition (not necessarily minimal) by greedy descending
+    const coins = [50,20,10,5,1];
+    let rem = target; const comp = [];
+    for (const c of coins){ const cnt = Math.floor(rem / c); if (cnt>0){ comp.push(`${cnt} x ${c}`); rem -= cnt*c } }
+    alert('提示組合: ' + comp.join(', '));
+  });
+
+  nextBtn.addEventListener('click', ()=>{
+    if (cur < TOTAL) newRound(); else { location.href='index.html'; }
+  });
+
+  // keyboard shortcuts: 1-5 add coins
+  document.addEventListener('keydown', (e)=>{
+    if (/^[1-5]$/.test(e.key)){
+      const idx = parseInt(e.key,10)-1; const btn = coinButtons[idx]; if (btn) btn.click();
+    }
+  });
+
+  // start first round
+  newRound();
+
+  </script>
+</body>
+</html>

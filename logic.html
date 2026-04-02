@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>邏輯推理 - 豆豆數學</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:18px;padding:18px;background:#fffbf0;color:#1f2937}
+    header{display:flex;gap:12px;align-items:center}
+    h1{font-size:1.8rem}
+    .card{background:#fff;border-radius:12px;padding:18px;box-shadow:0 8px 20px rgba(2,6,23,0.06);max-width:720px}
+    .prompt{font-size:1.4rem;margin:8px 0 12px}
+    .choices{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
+    .choice{padding:12px;border-radius:10px;background:#f8fafc;border:1px solid #e6eef8;cursor:pointer;font-size:1rem}
+    .choice:focus{outline:2px solid #60a5fa}
+    .choice.correct{background:#dff7df;border-color:#38a169}
+    .choice.wrong{background:#ffe6e6;border-color:#e53e3e}
+    .footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+    .result-modal{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:opacity .18s}
+    .result-modal.show{visibility:visible;opacity:1}
+    .modal-card{background:white;padding:18px;border-radius:12px;width:320px;text-align:center}
+    button{cursor:pointer}
+  .global-ui { position: absolute; top: 18px; right: 18px; display: flex; gap: 10px; align-items: center; z-index: 1000; }
+  .mute-btn { background: rgba(255,255,255,0.9); border: none; padding: 8px 10px; border-radius: 12px; font-size: 1.1em; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.12);} 
+  .star-counter { background: rgba(255,255,255,0.95); padding: 6px 10px; border-radius: 12px; font-weight: bold; font-size: 1.1em; }
+  .encouragement { position: absolute; left: 16px; top: -10px; background: rgba(255,255,255,0.95); padding: 8px 12px; border-radius: 12px; font-size: 1.1em; transform-origin: left top; box-shadow: 0 6px 14px rgba(0,0,0,0.15); pointer-events: none; opacity: 0; transition: transform 0.35s ease, opacity 0.35s ease; }
+  .encouragement.show { opacity: 1; transform: translateY(-8px) scale(1); }
+  .confetti-container { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 900; }
+  .confetti-particle { position: absolute; width: 10px; height: 14px; border-radius: 2px; opacity: 0.95; transform-origin: center; will-change: transform, opacity; }
+  .floating-star { position: absolute; font-size: 1.6em; pointer-events: none; animation: floatUp 900ms ease forwards; }
+  @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1;} 100% { transform: translateY(-60px) scale(1.2); opacity: 0;} }
+  .performance-badge { font-size: 2em; margin-top: 8px; display: inline-block; }
+  </style>
+  <link rel="stylesheet" href="resource/game-core.css">
+</head>
+<body>
+  <!-- BEGIN quick-wins global UI -->
+  <div class="global-ui" aria-hidden="false">
+    <button id="muteToggle" class="mute-btn" title="靜音/開聲">🔊</button>
+    <div id="starCounter" class="star-counter">⭐ 0</div>
+  </div>
+  <div style="position: relative;">
+    <div id="encouragement" class="encouragement" aria-live="polite"></div>
+    <div id="confetti" class="confetti-container"></div>
+  </div>
+  <header>
+    <a href="index.html">← 回到首頁</a>
+    <h1>邏輯推理</h1>
+  </header>
+  <p class="instructions">每回合 10 題。閱讀題目並選出最合邏輯的答案。鍵盤 1-4 選擇答案。若答對可獲得星星 ⭐。</p>
+
+  <div class="card">
+    <div id="prompt" class="prompt">按 Start 開始遊戲</div>
+    <div id="choices" class="choices" role="list"></div>
+    <div class="footer">
+      <div>Q <span id="cur">0</span>/10</div>
+      <div id="feedback" aria-live="polite"></div>
+    </div>
+    <div style="margin-top:12px;text-align:right">
+      <button id="startBtn" style="padding:6px 12px;border-radius:8px;background:#f97316;color:#fff;border:none">Start</button>
+    </div>
+  </div>
+
+  <div id="resultModal" class="result-modal" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <h2>結果</h2>
+      <p id="resultSummary"></p>
+      <div style="margin-top:12px">
+        <button id="retryBtn">再一次</button>
+        <a href="index.html" style="margin-left:8px"><button>回首頁</button></a>
+      </div>
+    </div>
+  </div>
+n  <script src="resource/game-core.js"></script>
+  <script>
+  const Q = getQuickWins();
+
+  // Simple template-based puzzle set. Extend later with more templates.
+  const PUZZLES = [
+    { // odd-one-out (哪一個不一樣)
+      prompt: '哪一個與其他三個不同？',
+      choices: ['狗', '貓', '魚', '蘋果'],
+      answerIndex: 3
+    },
+    { // sequence next
+      prompt: '找出下一個： 2, 4, 6, ?',
+      choices: ['7','8','9','6'],
+      answerIndex: 1
+    },
+    { // classification
+      prompt: '哪一個是偶數？',
+      choices: ['7','9','4','11'],
+      answerIndex: 2
+    },
+    { // logical statement
+      prompt: '如果所有 A 都是 B，且所有 B 都是 C，則 A 是不是 C？',
+      choices: ['是','否','可能','不知道'],
+      answerIndex: 0
+    },
+    { // pattern shapes (text-based)
+      prompt: '圖形序列：○ △ ○ △，下個是？',
+      choices: ['△','○','□','△○'],
+      answerIndex: 0
+    },
+    { // simple math logic
+      prompt: '小華比小明高，小明比小強高，誰最高？',
+      choices: ['小華','小明','小強','都一樣高'],
+      answerIndex: 0
+    },
+    { // grouping
+      prompt: '哪一項不屬於水果？',
+      choices: ['橘子','香蕉','西瓜','胡蘿蔔'],
+      answerIndex: 3
+    },
+    { // relative ordering
+      prompt: 'A > B, B > C，則哪一個成立？',
+      choices: ['A > C','C > A','B > A','A = B'],
+      answerIndex: 0
+    }
+  ];
+
+  const TOTAL = 10;
+  let deck = [], cur = 0, score = 0;
+
+  const promptEl = document.getElementById('prompt');
+  const choicesEl = document.getElementById('choices');
+  const curEl = document.getElementById('cur');
+  const feedback = document.getElementById('feedback');
+  const modal = document.getElementById('resultModal');
+  const resultSummary = document.getElementById('resultSummary');
+  const startBtn = document.getElementById('startBtn');
+  const retryBtn = document.getElementById('retryBtn');
+
+  function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
+
+  function makeDeck(){
+    // create a deck of QUESTIONS by sampling from PUZZLES and creating small variations
+    const arr = [];
+    for (let i=0;i<TOTAL;i++){
+      const base = PUZZLES[randInt(0, PUZZLES.length-1)];
+      // shallow copy
+      const copy = { prompt: base.prompt, choices: base.choices.slice(), answerIndex: base.answerIndex };
+      // small shuffle of choices while tracking correct index
+      const choices = copy.choices.map((c, idx)=>({c, idx}));
+      for (let j=choices.length-1;j>0;j--){ const k=Math.floor(Math.random()*(j+1)); [choices[j],choices[k]]=[choices[k],choices[j]] }
+      const shuffled = choices.map(x=>x.c);
+      const newAnswerIndex = choices.findIndex(x=> x.idx === copy.answerIndex);
+      arr.push({prompt: copy.prompt, choices: shuffled, answerIndex: newAnswerIndex});
+    }
+    deck = arr;
+  }
+
+  function renderQuestion(){
+    const q = deck[cur];
+    promptEl.textContent = q.prompt;
+    choicesEl.innerHTML = '';
+    q.choices.forEach((c,i)=>{
+      const b = document.createElement('button'); b.className='choice'; b.textContent = `${i+1}. ${c}`; b.dataset.index = i; b.addEventListener('click', ()=>handleAnswer(i, b)); b.tabIndex=0; choicesEl.appendChild(b);
+    });
+    curEl.textContent = cur+1;
+    feedback.textContent = '';
+    // focus the first button for keyboard users
+    setTimeout(()=>{ const f = choicesEl.querySelector('button'); if (f) f.focus(); }, 60);
+  }
+
+  function handleAnswer(idx, btn){
+    const q = deck[cur];
+    Array.from(choicesEl.children).forEach(x=>x.disabled=true);
+    if (idx === q.answerIndex){
+      btn.classList.add('correct'); score++; Q.playCorrect(); Q.awardStar(1); Q.encourage(true); feedback.textContent='答對了！';
+    } else {
+      btn.classList.add('wrong'); Q.playWrong(); Q.encourage(false); feedback.textContent='答錯了。';
+      // highlight correct
+      const correctBtn = Array.from(choicesEl.children).find(x=> parseInt(x.dataset.index,10)===q.answerIndex);
+      if (correctBtn) correctBtn.classList.add('correct');
+    }
+    setTimeout(()=>{ cur++; if (cur < TOTAL) renderQuestion(); else showResult(); }, 800);
+  }
+
+  function showResult(){ resultSummary.textContent = `你答對 ${score} / ${TOTAL} 題`; modal.classList.add('show'); if (score >= Math.ceil(TOTAL*0.7)){ Q.confetti(); Q.playLevelUp(); } }
+
+  function startGame(){ cur = 0; score = 0; makeDeck(); renderQuestion(); modal.classList.remove('show'); }
+
+  // keyboard support 1-4
+  document.addEventListener('keydown', function(e){ if (modal.classList.contains('show')) return; if (!/^[1-4]$/.test(e.key)) return; const idx = parseInt(e.key,10)-1; const btn = choicesEl.children[idx]; if (btn) btn.click(); });
+
+  startBtn.addEventListener('click', function(){ Q.playClick && Q.playClick(); startGame(); });
+  retryBtn.addEventListener('click', function(){ Q.playClick && Q.playClick(); startGame(); modal.classList.remove('show'); });
+
+  </script>
+</body>
+</html>

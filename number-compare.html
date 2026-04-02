@@ -244,12 +244,49 @@
                 gap: 10px;
             }
         }
+    /* == BEGIN: quick-wins shared styles == */
+    /* global UI */
+    .global-ui { position: absolute; top: 18px; right: 18px; display: flex; gap: 10px; align-items: center; z-index: 1000; }
+    .mute-btn { background: rgba(255,255,255,0.9); border: none; padding: 8px 10px; border-radius: 12px; font-size: 1.1em; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.12);} 
+    .star-counter { background: rgba(255,255,255,0.95); padding: 6px 10px; border-radius: 12px; font-weight: bold; font-size: 1.1em; }
+    .encouragement { position: absolute; left: 16px; top: -10px; background: rgba(255,255,255,0.95); padding: 8px 12px; border-radius: 12px; font-size: 1.1em; transform-origin: left top; box-shadow: 0 6px 14px rgba(0,0,0,0.15); pointer-events: none; opacity: 0; transition: transform 0.35s ease, opacity 0.35s ease; }
+    .encouragement.show { opacity: 1; transform: translateY(-8px) scale(1); }
+
+    /* confetti container and particle */
+    .confetti-container { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 900; }
+    .confetti-particle { position: absolute; width: 10px; height: 14px; border-radius: 2px; opacity: 0.95; transform-origin: center; will-change: transform, opacity; }
+
+    /* floating +1 star */
+    .floating-star { position: absolute; font-size: 1.6em; pointer-events: none; animation: floatUp 900ms ease forwards; }
+    @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1;} 100% { transform: translateY(-60px) scale(1.2); opacity: 0;} }
+
+    /* tiny badge styling */
+    .performance-badge { font-size: 2em; margin-top: 8px; display: inline-block; }
+
+    /* keep animations short and accessible */
+    /* == END: quick-wins shared styles == */
+
     </style>
 </head>
 <body>
     <a href="index.html" class="back-button">← 返回主頁</a>
     
     <div class="container">
+
+        <!-- BEGIN quick-wins global UI -->
+        <div class="global-ui" aria-hidden="false">
+          <button id="muteToggle" class="mute-btn" title="靜音/開聲">🔊</button>
+          <div id="starCounter" class="star-counter">⭐ 0</div>
+        </div>
+
+        <!-- encouragement bubble (positioned relative to container) -->
+        <div style="position: relative;">
+          <div id="encouragement" class="encouragement" aria-live="polite"></div>
+          <div id="confetti" class="confetti-container"></div>
+        </div>
+
+        <!-- END quick-wins global UI -->
+
         <h1>🔢 數字比大小</h1>
         
         <div id="welcome-screen">
@@ -297,6 +334,7 @@
         <div id="results-screen" class="hidden">
             <div class="final-results">
                 <h2>🎉 遊戲完成！</h2>
+                <div id="performance-badge" class="performance-badge" aria-hidden="true"></div>
                 <div class="result-item">
                     <span>總題數:</span>
                     <span id="final-total">20</span>
@@ -438,6 +476,21 @@
                     }
                     card.onclick = null; // 禁用點擊
                 });
+
+                // --- Quick-wins feedback hooks ---
+                if (isCorrect) {
+                    if (window.QuickWins) {
+                        window.QuickWins.playCorrect();
+                        window.QuickWins.confetti();
+                        window.QuickWins.encourage(true);
+                        window.QuickWins.awardStar(1);
+                    }
+                } else {
+                    if (window.QuickWins) {
+                        window.QuickWins.playWrong();
+                        window.QuickWins.encourage(false);
+                    }
+                }
                 
                 if (isCorrect) {
                     this.correctAnswers++;
@@ -519,6 +572,15 @@
                 document.getElementById('final-avg-time').textContent = avgTime.toFixed(1) + '秒';
                 document.getElementById('final-fastest').textContent = fastestTime.toFixed(1) + '秒';
                 document.getElementById('final-slowest').textContent = slowestTime.toFixed(1) + '秒';
+
+                // performance badge
+                const accuracyVal = parseFloat(accuracy);
+                const badgeEl = document.getElementById('performance-badge');
+                if (badgeEl) {
+                    if (accuracyVal >= 90) badgeEl.textContent = '🏅';
+                    else if (accuracyVal >= 75) badgeEl.textContent = '🥈';
+                    else badgeEl.textContent = '🥉';
+                }
             }
 
             restartGame() {
@@ -546,5 +608,210 @@
             }
         });
     </script>
+
+<script>
+// == BEGIN: quick-wins shared script ==
+(function(){
+  // localStorage keys
+  const MUTED_KEY = 'math_test_muted';
+  const SCORE_KEY = 'math_test_session_score';
+
+  // --- SoundManager (Web Audio API, synthesized tones) ---
+  const SoundManager = (function(){
+    let ctx = null;
+    let masterGain = null;
+    let isMuted = (localStorage.getItem(MUTED_KEY) === 'true');
+
+    function ensureCtx(){
+      if (!ctx) {
+        try {
+          ctx = new (window.AudioContext || window.webkitAudioContext)();
+          masterGain = ctx.createGain();
+          masterGain.gain.value = isMuted ? 0 : 1;
+          masterGain.connect(ctx.destination);
+        } catch(e) {
+          console.warn('AudioContext not available', e);
+        }
+      }
+    }
+
+    function resumeOnGesture(){
+      if (!ctx) ensureCtx();
+      if (ctx && ctx.state === 'suspended') { ctx.resume(); }
+    }
+
+    function setMuted(v){
+      isMuted = !!v;
+      localStorage.setItem(MUTED_KEY, isMuted ? 'true' : 'false');
+      if (masterGain) masterGain.gain.value = isMuted ? 0 : 1;
+      const btn = document.getElementById('muteToggle');
+      if (btn) btn.textContent = isMuted ? '🔇' : '🔊';
+    }
+
+    function playTone(type){
+      if (isMuted) return;
+      ensureCtx();
+      if (!ctx) return;
+
+      const now = ctx.currentTime;
+      // quick helpers
+      function osc(time, freq, type='sine', dur=0.18){
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = type;
+        o.frequency.setValueAtTime(freq, time);
+        g.gain.setValueAtTime(0.0001, time);
+        g.gain.exponentialRampToValueAtTime(0.25, time + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+        o.connect(g);
+        g.connect(masterGain);
+        o.start(time);
+        o.stop(time + dur + 0.02);
+      }
+
+      if (type === 'correct'){
+        // ascending arpeggio: three quick tones
+        osc(now, 880, 'sine', 0.12);
+        osc(now + 0.11, 1100, 'sine', 0.12);
+        osc(now + 0.22, 1320, 'sine', 0.18);
+      } else if (type === 'wrong'){
+        // descending harsh buzz: sawtooth with short noise
+        osc(now, 220, 'sawtooth', 0.18);
+        osc(now + 0.05, 160, 'sawtooth', 0.18);
+      } else if (type === 'levelup'){
+        // simple fanfare
+        osc(now, 660, 'triangle', 0.18);
+        osc(now + 0.12, 880, 'triangle', 0.24);
+        osc(now + 0.36, 1320, 'triangle', 0.34);
+      } else if (type === 'click'){
+        osc(now, 1000, 'sine', 0.12);
+      }
+    }
+
+    // public API
+    return {
+      initOnFirstGesture: function(){
+        // resume audio context on first user gesture (defensive)
+        const once = () => { resumeOnGesture(); window.removeEventListener('pointerdown', once); };
+        window.addEventListener('pointerdown', once);
+      },
+      play: playTone,
+      setMuted: setMuted,
+      isMuted: function(){ return isMuted; },
+      _debug: function(){ return {ctx, masterGain}; }
+    };
+  })();
+
+  // --- Confetti launcher (simple DOM particles) ---
+  function launchConfetti(x=50, y=50, count=18){
+    const container = document.getElementById('confetti');
+    if (!container) return;
+    const colors = ['#ffcc00','#ff6b6b','#4ecdc4','#5b86e5','#ff9ff3'];
+    const rect = container.getBoundingClientRect();
+
+    for (let i=0;i<count;i++){
+      const p = document.createElement('div');
+      p.className = 'confetti-particle';
+      p.style.left = (x + (Math.random()*80-40)) + '%';
+      p.style.top = (y + (Math.random()*10-10)) + '%';
+      p.style.background = colors[Math.floor(Math.random()*colors.length)];
+      const tilt = (Math.random()*360)|0;
+      p.style.transform = `rotate(${tilt}deg)`;
+      container.appendChild(p);
+
+      // random velocity via transition using requestAnimationFrame
+      const dx = (Math.random()*120-60);
+      const dy = (80 + Math.random()*120);
+      const rot = (Math.random()*720-360);
+      const dur = 800 + Math.random()*600;
+
+      requestAnimationFrame(()=>{
+        p.animate([
+          { transform: `translateY(0px) rotate(${tilt}deg)`, opacity: 1 },
+          { transform: `translate(${dx}px, ${dy}px) rotate(${tilt+rot}deg)`, opacity: 0 }
+        ], { duration: dur, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      });
+
+      // remove after animation
+      setTimeout(()=>{ p.remove(); }, 1600);
+    }
+  }
+
+  // --- Encouragement messages ---
+  const ENCOURAGEMENTS = [ '太厲害了！', '超強的！', '答對了！繼續衝！', '完美！', '你是數學天才！' ];
+  function showEncouragement(isCorrect){
+    const el = document.getElementById('encouragement');
+    if (!el) return;
+    el.textContent = isCorrect ? ENCOURAGEMENTS[Math.floor(Math.random()*ENCOURAGEMENTS.length)] : '沒關係，下次一定可以！';
+    el.classList.add('show');
+    setTimeout(()=> el.classList.remove('show'), 1200);
+  }
+
+  // --- Stars and session score ---
+  function getSessionScore(){ return parseInt(localStorage.getItem(SCORE_KEY) || '0', 10); }
+  function setSessionScore(v){ localStorage.setItem(SCORE_KEY, String(v)); updateStarUI(); }
+  function addStar(num=1, fromX, fromY){
+    const container = document.querySelector('.container') || document.body;
+    const star = document.createElement('div');
+    star.className = 'floating-star';
+    star.style.left = (fromX || 90) + '%';
+    star.style.top = (fromY || 10) + '%';
+    star.textContent = '+1⭐';
+    container.appendChild(star);
+    setTimeout(()=> star.remove(), 950);
+    setSessionScore(getSessionScore() + num);
+    // small pulse on counter
+    const counter = document.getElementById('starCounter');
+    if (counter){ counter.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.15)' }, { transform: 'scale(1)' }], { duration: 300 }); }
+  }
+
+  function updateStarUI(){
+    const el = document.getElementById('starCounter');
+    if (!el) return;
+    el.textContent = '⭐ ' + getSessionScore();
+  }
+
+  // --- Mute toggle wiring ---
+  function wireMuteButton(){
+    const btn = document.getElementById('muteToggle');
+    if (!btn) return;
+    btn.addEventListener('click', function(e){
+      // ensure AudioContext available on gesture
+      SoundManager.initOnFirstGesture();
+      const newMuted = ! (localStorage.getItem(MUTED_KEY) === 'true');
+      SoundManager.setMuted(newMuted);
+      updateStarUI();
+    });
+    // set initial state
+    const m = localStorage.getItem(MUTED_KEY) === 'true';
+    SoundManager.setMuted(m);
+  }
+
+  // initialize small behaviors on DOMContentLoaded
+  document.addEventListener('DOMContentLoaded', function(){
+    SoundManager.initOnFirstGesture(); // resume on first gesture
+    wireMuteButton();
+    updateStarUI();
+    // resume UI hint
+    const muteBtn = document.getElementById('muteToggle');
+    if (muteBtn) muteBtn.textContent = SoundManager.isMuted() ? '🔇' : '🔊';
+    // expose a tiny API for page scripts to call
+    window.QuickWins = {
+      playCorrect: function(){ SoundManager.play('correct'); },
+      playWrong: function(){ SoundManager.play('wrong'); },
+      playClick: function(){ SoundManager.play('click'); },
+      playLevelUp: function(){ SoundManager.play('levelup'); },
+      confetti: launchConfetti,
+      encourage: showEncouragement,
+      awardStar: addStar,
+      setMuted: SoundManager.setMuted,
+      isMuted: SoundManager.isMuted,
+      updateStarUI: updateStarUI
+    };
+  });
+})();
+// == END: quick-wins shared script ==
+</script>
+
 </body>
 </html>

@@ -1,0 +1,25 @@
+.global-ui { position: absolute; top: 18px; right: 18px; display: flex; gap: 10px; align-items: center; z-index: 1000; }
+.mute-btn { background: rgba(255,255,255,0.9); border: none; padding: 8px 10px; border-radius: 12px; font-size: 1.1em; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.12);} 
+.star-counter { background: rgba(255,255,255,0.95); padding: 6px 10px; border-radius: 12px; font-weight: bold; font-size: 1.1em; }
+.encouragement { position: absolute; left: 16px; top: -10px; background: rgba(255,255,255,0.95); padding: 8px 12px; border-radius: 12px; font-size: 1.1em; transform-origin: left top; box-shadow: 0 6px 14px rgba(0,0,0,0.15); pointer-events: none; opacity: 0; transition: transform 0.35s ease, opacity 0.35s ease; }
+.encouragement.show { opacity: 1; transform: translateY(-8px) scale(1); }
+.confetti-container { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 900; }
+.confetti-particle { position: absolute; width: 10px; height: 14px; border-radius: 2px; opacity: 0.95; transform-origin: center; will-change: transform, opacity; }
+.floating-star { position: absolute; font-size: 1.6em; pointer-events: none; animation: floatUp 900ms ease forwards; }
+@keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1;} 100% { transform: translateY(-60px) scale(1.2); opacity: 0;} }
+.performance-badge { font-size: 2em; margin-top: 8px; display: inline-block; }
+
+/* Added: tablet & small screens adjustments */
+@media (max-width: 768px) {
+  .global-ui { position: fixed; top: auto; right: 12px; bottom: 12px; left: auto; background: rgba(255,255,255,0.95); padding: 6px; border-radius: 12px; gap: 8px; }
+  .mute-btn { padding: 6px 8px; font-size: 0.95em; }
+  .star-counter { font-size: 1em; padding: 4px 8px; }
+  .encouragement { left: auto; right: 12px; top: auto; bottom: 72px; }
+}
+
+/* Mobile adjustments: move global UI to bottom-left on narrow screens */
+@media (max-width: 480px) {
+  .global-ui { position: fixed; top: auto; right: auto; bottom: 12px; left: 12px; background: rgba(255,255,255,0.95); padding: 6px; border-radius: 12px; gap: 8px; }
+  .encouragement { left: 12px; top: auto; bottom: 56px; }
+  .confetti-container { z-index: 10000; }
+}

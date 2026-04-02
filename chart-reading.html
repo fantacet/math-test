@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>圖表解讀 - 豆豆數學</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:18px;padding:18px;background:#fbfff7;color:#0f172a}
+    header{display:flex;gap:12px;align-items:center}
+    h1{font-size:1.8rem}
+    .chart-card{background:white;border-radius:12px;padding:12px;box-shadow:0 8px 22px rgba(2,6,23,0.06);max-width:560px}
+    .chart-svg{width:100%;height:220px}
+    .choices{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+    .choice{padding:10px;background:#fff;border-radius:8px;border:1px solid #e6e6e6;cursor:pointer}
+    .result-modal{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:opacity .18s}
+    .result-modal.show{visibility:visible;opacity:1}
+    .modal-card{background:white;padding:18px;border-radius:12px;width:340px;text-align:center}
+  .global-ui { position: absolute; top: 18px; right: 18px; display: flex; gap: 10px; align-items: center; z-index: 1000; }
+  .mute-btn { background: rgba(255,255,255,0.9); border: none; padding: 8px 10px; border-radius: 12px; font-size: 1.1em; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.12);} 
+  .star-counter { background: rgba(255,255,255,0.95); padding: 6px 10px; border-radius: 12px; font-weight: bold; font-size: 1.1em; }
+  .encouragement { position: absolute; left: 16px; top: -10px; background: rgba(255,255,255,0.95); padding: 8px 12px; border-radius: 12px; font-size: 1.1em; transform-origin: left top; box-shadow: 0 6px 14px rgba(0,0,0,0.15); pointer-events: none; opacity: 0; transition: transform 0.35s ease, opacity 0.35s ease; }
+  .encouragement.show { opacity: 1; transform: translateY(-8px) scale(1); }
+  .confetti-container { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 900; }
+  .confetti-particle { position: absolute; width: 10px; height: 14px; border-radius: 2px; opacity: 0.95; transform-origin: center; will-change: transform, opacity; }
+  .floating-star { position: absolute; font-size: 1.6em; pointer-events: none; animation: floatUp 900ms ease forwards; }
+  @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1;} 100% { transform: translateY(-60px) scale(1.2); opacity: 0;} }
+  .performance-badge { font-size: 2em; margin-top: 8px; display: inline-block; }
+  </style>
+  <link rel="stylesheet" href="resource/game-core.css">
+</head>
+<body>
+  <!-- BEGIN quick-wins global UI -->
+  <div class="global-ui" aria-hidden="false">
+    <button id="muteToggle" class="mute-btn" title="靜音/開聲">🔊</button>
+    <div id="starCounter" class="star-counter">⭐ 0</div>
+  </div>
+  <div style="position: relative;">
+    <div id="encouragement" class="encouragement" aria-live="polite"></div>
+    <div id="confetti" class="confetti-container"></div>
+  </div>
+  <header>
+    <a href="index.html">← 回到首頁</a>
+    <h1>圖表解讀</h1>
+  </header>
+  <p>觀察下方長條圖並回答問題。難度增加會改變題型（最大值／差值／百分比）。鍵盤 1-4 選答案。</p>
+
+  <div class="chart-card">
+    <div id="svgWrap"></div>
+    <div id="question" style="margin-top:8px;font-weight:bold"></div>
+    <div id="choices" class="choices"></div>
+    <div style="margin-top:8px">Q <span id="cur">0</span>/10</div>
+  </div>
+
+  <div id="resultModal" class="result-modal" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <h2>結果</h2>
+      <p id="resultSummary"></p>
+      <div style="margin-top:12px">
+        <button id="retryBtn">再一次</button>
+        <a href="index.html" style="margin-left:8px"><button>回首頁</button></a>
+      </div>
+    </div>
+  </div>
+
+  <script src="resource/game-core.js"></script>
+  <script>
+  const Q = getQuickWins();
+
+  const TOTAL = 10; let cur=0, score=0, difficulty='easy';
+  const svgWrap = document.getElementById('svgWrap');
+  const questionEl = document.getElementById('question');
+  const choicesEl = document.getElementById('choices');
+  const curEl = document.getElementById('cur');
+  const modal = document.getElementById('resultModal');
+  const resultSummary = document.getElementById('resultSummary');
+  const retryBtn = document.getElementById('retryBtn');
+
+  function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
+
+  // Difficulty controls question type: easy=max, medium=difference, hard=percentage
+  function makeChartData(){ const n = randInt(3,5); const labels = ['A','B','C','D','E'].slice(0,n); const values = labels.map(_=>randInt(5,90)); return {labels, values}; }
+
+  function renderChart(data){ const w=520, h=200, pad=30; const max = Math.max(...data.values); const barW = Math.floor((w - pad*2) / data.values.length) - 10; let svg = `<svg class="chart-svg" viewBox="0 0 ${w} ${h}" role="img" aria-label="長條圖">`;
+    // bars
+    data.values.forEach((v,i)=>{
+      const bw = barW; const x = pad + i*(bw+10);
+      const bh = Math.round((v/max)*(h-pad*1.5));
+      const y = h - pad - bh;
+      const color = ['#60a5fa','#f472b6','#34d399','#f59e0b','#a78bfa'][i%5];
+      svg += `<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="${color}"></rect>`;
+      svg += `<text x="${x+bw/2}" y="${h-pad+14}" font-size="12" text-anchor="middle">${data.labels[i]}</text>`;
+      svg += `<text x="${x+bw/2}" y="${y-6}" font-size="12" text-anchor="middle">${data.values[i]}</text>`;
+    });
+    svg += `</svg>`;
+    svgWrap.innerHTML = svg;
+  }
+
+  function makeQuestionFromChart(data){ // return {text, correct, choices}
+    const type = (function(){ if (difficulty==='easy') return 'max'; if (difficulty==='medium') return 'diff'; return 'pct'; })();
+    if (type==='max'){
+      const maxVal = Math.max(...data.values); const maxIdx = data.values.indexOf(maxVal); const correct = data.labels[maxIdx];
+      // choices: labels
+      const opts = new Set([correct]); while (opts.size < 4){ opts.add(data.labels[randInt(0,data.labels.length-1)]) }
+      const arr = Array.from(opts);
+      for (let j=arr.length-1;j>0;j--){ const k=Math.floor(Math.random()*(j+1)); [arr[j],arr[k]]=[arr[k],arr[j]] }
+      return {text: '哪一項數值最大？', correct: correct, choices: arr};
+    } else if (type==='diff'){
+      // ask difference between two random categories
+      const i = randInt(0,data.labels.length-1); let j = randInt(0,data.labels.length-1); while (j===i) j = randInt(0,data.labels.length-1);
+      const a = data.labels[i], b = data.labels[j]; const diff = Math.abs(data.values[i] - data.values[j]);
+      const opts = new Set([diff]); while (opts.size < 4){ opts.add(Math.max(0, diff + randInt(-8,8))); }
+      const arr = Array.from(opts).map(x=>String(x));
+      for (let z=arr.length-1;z>0;z--){ const k=Math.floor(Math.random()*(z+1)); [arr[z],arr[k]]=[arr[k],arr[z]] }
+      return {text: `「${a}」和「${b}」的數值相差多少？`, correct: String(diff), choices: arr};
+    } else {
+      // percentage of a category (rounded)
+      const idx = randInt(0,data.labels.length-1); const label = data.labels[idx]; const total = data.values.reduce((s,x)=>s+x,0); const pct = Math.round((data.values[idx]/total)*100);
+      const opts = new Set([pct]); while (opts.size < 4){ opts.add(Math.max(0, pct + randInt(-12,12))); }
+      const arr = Array.from(opts).map(x=>String(x+'%'));
+      for (let z=arr.length-1;z>0;z--){ const k=Math.floor(Math.random()*(z+1)); [arr[z],arr[k]]=[arr[k],arr[z]] }
+      return {text: `「${label}」占總量的約多少？`, correct: String(pct+'%'), choices: arr};
+    }
+  }
+
+  function nextQ(){ cur++; curEl.textContent = cur; const data = makeChartData(); renderChart(data); const q = makeQuestionFromChart(data); questionEl.textContent = q.text; choicesEl.innerHTML=''; q.choices.forEach((c,i)=>{ const b = document.createElement('button'); b.className='choice'; b.textContent = `${i+1}. ${c}`; b.dataset.value = c; b.addEventListener('click', ()=>handleAnswer(c, b, q.correct)); choicesEl.appendChild(b); }); setTimeout(()=>{ const f = choicesEl.querySelector('button'); if (f) f.focus(); },80);
+  }
+
+  function handleAnswer(val, el, correct){ Array.from(choicesEl.children).forEach(b=>b.disabled=true); if (String(val) === String(correct)){ el.style.background='#dff7df'; score++; Q.playCorrect(); Q.awardStar(1); Q.encourage(true); } else { el.style.background='#ffe6e6'; Q.playWrong(); Q.encourage(false); // highlight correct
+      Array.from(choicesEl.children).forEach(b=>{ if (b.dataset.value === String(correct)) b.style.background='#dff7df' }); }
+    setTimeout(()=>{ if (cur < TOTAL) nextQ(); else showResult(); },900);
+  }
+
+  function showResult(){ resultSummary.textContent = `你答對 ${score} / ${TOTAL} 題`; modal.classList.add('show'); if (score >= Math.ceil(TOTAL*0.7)){ Q.confetti(); Q.playLevelUp(); } }
+
+  retryBtn.addEventListener('click', ()=>{ cur=0; score=0; modal.classList.remove('show'); nextQ(); });
+
+  // keyboard 1-4
+  document.addEventListener('keydown', function(e){ if (modal.classList.contains('show')) return; if (!/^[1-4]$/.test(e.key)) return; const idx = parseInt(e.key,10)-1; const btn = choicesEl.children[idx]; if (btn) btn.click(); });
+
+  // start first
+  nextQ();
+  </script>
+</body>
+</html>

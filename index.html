@@ -134,14 +134,15 @@
 
         .coming-soon {
             background: linear-gradient(145deg, #95a5a6, #7f8c8d);
-            opacity: 0.7;
-            cursor: not-allowed;
+            opacity: 1;
+            cursor: pointer;
         }
 
         .coming-soon .game-title::after {
             content: " (即將推出)";
             font-size: 0.7em;
             color: #7f8c8d;
+            pointer-events: none;
         }
 
         @media (max-width: 768px) {
@@ -164,10 +165,29 @@
                 grid-template-columns: 1fr;
             }
         }
+
+
     </style>
+    <link rel="stylesheet" href="resource/game-core.css">
+    <link rel="stylesheet" href="resource/gamify.css">
 </head>
 <body>
     <div class="container">
+
+        <!-- BEGIN quick-wins global UI -->
+        <div class="global-ui" aria-hidden="false">
+          <button id="muteToggle" class="mute-btn" title="靜音/開聲">🔊</button>
+          <div id="starCounter" class="star-counter">⭐ 0</div>
+        </div>
+
+        <!-- encouragement bubble (positioned relative to container) -->
+        <div style="position: relative;">
+          <div id="encouragement" class="encouragement" aria-live="polite"></div>
+          <div id="confetti" class="confetti-container"></div>
+        </div>
+
+        <!-- END quick-wins global UI -->
+
         <div class="title-wrapper">
             <img src="resource/omnom.png" alt="Omnom" class="title-icon">
             <h1 class="main-title">豆豆數學大挑戰</h1>
@@ -211,56 +231,58 @@
             </a>
 
             <!-- 第二排 -->
-            <div class="game-card coming-soon">
+            <a href="multiplication-master.html" class="game-card coming-soon">
                 <span class="game-icon">✖️</span>
                 <div class="game-title">乘法表王</div>
                 <div class="game-description">九九乘法表背誦練習</div>
                 <span class="difficulty hard">困難</span>
-            </div>
+            </a>
 
-            <div class="game-card coming-soon">
+            <a href="division-master.html" class="game-card coming-soon">
                 <span class="game-icon">➗</span>
                 <div class="game-title">除法精靈</div>
                 <div class="game-description">除法運算與餘數練習</div>
                 <span class="difficulty hard">困難</span>
-            </div>
+            </a>
 
-            <div class="game-card coming-soon">
+            <a href="mental-arithmetic.html" class="game-card coming-soon">
                 <span class="game-icon">🧮</span>
                 <div class="game-title">心算闖關</div>
                 <div class="game-description">混合四則運算心算</div>
                 <span class="difficulty hard">困難</span>
-            </div>
+            </a>
 
             <!-- 第三排 -->
-            <div class="game-card coming-soon">
+            <a href="chart-reading.html" class="game-card coming-soon">
                 <span class="game-icon">📊</span>
                 <div class="game-title">圖表解讀</div>
                 <div class="game-description">讀懂簡單統計圖表</div>
                 <span class="difficulty medium">中等</span>
-            </div>
+            </a>
 
-            <div class="game-card coming-soon">
+            <a href="money.html" class="game-card coming-soon">
                 <span class="game-icon">💰</span>
                 <div class="game-title">錢幣計算</div>
                 <div class="game-description">認識貨幣與找零練習</div>
                 <span class="difficulty medium">中等</span>
-            </div>
+            </a>
 
-            <div class="game-card coming-soon">
+            <a href="geometry.html" class="game-card coming-soon">
                 <span class="game-icon">📐</span>
                 <div class="game-title">幾何探險</div>
                 <div class="game-description">認識基本幾何圖形</div>
                 <span class="difficulty medium">中等</span>
-            </div>
+            </a>
 
-            <div class="game-card coming-soon">
+            <a href="logic.html" class="game-card coming-soon">
                 <span class="game-icon">🧩</span>
                 <div class="game-title">邏輯推理</div>
                 <div class="game-description">數學邏輯思考訓練</div>
                 <span class="difficulty hard">困難</span>
-            </div>
+            </a>
         </div>
     </div>
+<script src="resource/game-core.js"></script>
+<script src="resource/gamify.js"></script>
 </body>
 </html>

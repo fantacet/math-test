@@ -1,19 +1,38 @@
-# OS files
-.DS_Store
-Thumbs.db
-desktop.ini
+# Node modules
+node_modules/
+
+# Build / distribution
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Coverage
+coverage/
 
 # Editor directories and files
 .vscode/
 .idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+*.sublime-project
+*.sublime-workspace
 
-# Logs
-*.log
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
 
-# Dependency directories
-node_modules/
+# Environment / secrets
+.env
+
+# Temporary files
+*.tmp
+*.swp
+*~
+
+# Optional locks (if you prefer not to commit)
+# yarn.lock
+
+# Static site caches
+.cache/
